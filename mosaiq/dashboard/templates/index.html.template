@@ -142,6 +142,8 @@ __MOSAIQ_CHARTJS_INLINE__
   }
   .chart-card canvas { max-height: 280px; }
   .chart-card.wide { grid-column: 1 / -1; }
+  .scatter-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .scatter-controls label { font-size: 0.75rem; font-weight: 400; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 
   table {
     width: 100%;
@@ -227,10 +229,16 @@ __MOSAIQ_CHARTJS_INLINE__
   <div class="chart-card wide">
     <h3>
       Documents vs. hardware
-      <select id="scatter-x-metric">
-        <option value="cpu_cores">X: CPU cores</option>
-        <option value="ram_gb">X: RAM (GB)</option>
-      </select>
+      <span class="scatter-controls">
+        <select id="scatter-x-metric">
+          <option value="cpu_cores">X: CPU cores</option>
+          <option value="ram_gb">X: RAM (GB)</option>
+          <option value="index_size_gb">X: Disk/Index size (GB)</option>
+        </select>
+        <label><input type="checkbox" id="scatter-view-postgres" checked> PostgreSQL</label>
+        <label><input type="checkbox" id="scatter-view-mssql" checked> MSSQL</label>
+        <label><input type="checkbox" id="scatter-view-both"> Both</label>
+      </span>
     </h3>
     <canvas id="chart-scatter"></canvas>
   </div>

@@ -2,6 +2,18 @@
    DEPLOYMENTS array embedded in index.html. No backend, no network calls. */
 
 const PALETTE = ["#4fd1c5", "#a78bfa", "#f6ad55", "#f56565", "#63b3ed", "#68d391", "#f687b3", "#ecc94b"];
+
+// Blends a hex color toward white - used to give a "smoothed" line its own shade
+// within a group's color family, since relying on dash-pattern alone to tell it
+// apart from the "average" line (same color) is barely legible at legend-icon size.
+function lighten(hex, amount) {
+  const num = parseInt(hex.slice(1), 16);
+  const channel = (shift) => {
+    const value = (num >> shift) & 0xff;
+    return Math.round(value + (255 - value) * amount);
+  };
+  return `rgb(${channel(16)}, ${channel(8)}, ${channel(0)})`;
+}
 const TEXT_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#e8edf2";
 const GRID_COLOR = "rgba(143, 161, 179, 0.15)";
 
@@ -234,60 +246,109 @@ function smoothTrend(trend, windowSize = 3) {
   });
 }
 
-function upsertScatterChart(filtered) {
-  const metric = state.scatterXMetric;
-  const metricLabel = metric === "cpu_cores" ? "CPU cores" : "RAM (GB)";
-  const points = filtered
+const METRIC_LABELS = { cpu_cores: "CPU cores", ram_gb: "RAM (GB)", index_size_gb: "Disk/Index size (GB)" };
+
+function pointsFor(deployments, metric) {
+  return deployments
     .filter((d) => d[metric] && d.document_count)
     .map((d) => ({ x: d[metric], y: d.document_count, label: d.deployment_name }));
-  const trend = averageDocumentsByX(points);
-  const smoothed = smoothTrend(trend);
+}
+
+// Disk/index size scales very differently by database engine (an external MSSQL
+// database needs much less disk than Mosaiq's internal-Postgres-assumption cases),
+// so a PostgreSQL-only and an MSSQL-only series are each worth seeing on their own -
+// but as overlaid series on ONE shared-axis chart, not as separate charts with their
+// own auto-scaled axes, which makes direct comparison harder rather than easier.
+// CPU/RAM don't have this same database-dependent split but the same three-way
+// toggle (PostgreSQL / MSSQL / Both-combined) still applies to them for consistency.
+const SCATTER_VIEWS = [
+  { key: "postgres", label: "PostgreSQL", color: PALETTE[0], filter: (d) => (d.database_type || "").toUpperCase() === "POSTGRES" },
+  { key: "mssql", label: "MSSQL", color: PALETTE[1], filter: (d) => (d.database_type || "").toUpperCase() === "MSSQL" },
+  { key: "both", label: "Both", color: PALETTE[2], filter: () => true },
+];
+
+function upsertScatterChart(filtered) {
+  const metric = state.scatterXMetric;
+  const metricLabel = METRIC_LABELS[metric] || metric;
+
+  const datasets = [];
+  SCATTER_VIEWS.forEach(({ key, label, color, filter }) => {
+    if (!document.getElementById(`scatter-view-${key}`).checked) return;
+    const points = pointsFor(filtered.filter(filter), metric);
+    const trend = averageDocumentsByX(points);
+    const smoothed = smoothTrend(trend);
+
+    datasets.push({
+      type: "scatter",
+      label: `${label} deployments`,
+      data: points,
+      backgroundColor: color,
+    });
+    datasets.push({
+      type: "line",
+      label: `${label} average`,
+      data: trend,
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: 2,
+      pointRadius: 3,
+      tension: 0,
+      fill: false,
+    });
+    const smoothedColor = lighten(color, 0.45);
+    datasets.push({
+      type: "line",
+      label: `${label} smoothed`,
+      data: smoothed,
+      borderColor: smoothedColor,
+      backgroundColor: smoothedColor,
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      tension: 0.3,
+      fill: false,
+    });
+  });
 
   const config = {
     type: "scatter",
-    data: {
-      datasets: [
-        {
-          type: "scatter",
-          label: "Deployments",
-          data: points,
-          backgroundColor: PALETTE[0],
-        },
-        {
-          type: "line",
-          label: "Average at this hardware level",
-          data: trend,
-          borderColor: PALETTE[3],
-          backgroundColor: PALETTE[3],
-          borderWidth: 2,
-          pointRadius: 3,
-          tension: 0,
-          fill: false,
-        },
-        {
-          type: "line",
-          label: "Smoothed trend",
-          data: smoothed,
-          borderColor: PALETTE[5],
-          backgroundColor: PALETTE[5],
-          borderWidth: 2,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          tension: 0.3,
-          fill: false,
-        },
-      ],
-    },
+    data: { datasets },
     options: {
       plugins: {
-        legend: { display: true, position: "top", labels: { boxWidth: 12 } },
+        legend: {
+          display: true,
+          position: "top",
+          labels: {
+            boxWidth: 12,
+            generateLabels: (chart) => {
+              // Default legend behavior strikes through the TEXT of a hidden
+              // dataset but leaves its color swatch untouched - easy to miss,
+              // especially with multiple same-colored swatches in one legend.
+              // Grey the swatch out too so on/off is obvious at a glance.
+              const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+              items.forEach((item) => {
+                // The "smoothed" lines use borderDash for the actual chart line,
+                // but that makes their legend swatch render as a dashed line
+                // segment instead of a plain square like every other item - keep
+                // the dash on the chart itself, not the legend icon.
+                item.lineDash = [];
+                if (item.hidden) {
+                  item.fillStyle = "rgba(150, 150, 150, 0.35)";
+                  item.strokeStyle = "rgba(150, 150, 150, 0.5)";
+                }
+              });
+              return items;
+            },
+          },
+        },
         tooltip: {
           callbacks: {
             label: (ctx) => {
-              if (ctx.dataset.label === "Smoothed trend")
-                return `Smoothed near ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
-              if (ctx.dataset.type === "line")
-                return `Average at ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
+              const label = ctx.dataset.label;
+              if (label.endsWith(" smoothed"))
+                return `${label.replace(" smoothed", "")} smoothed near ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
+              if (label.endsWith(" average"))
+                return `${label.replace(" average", "")} average at ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
               return `${ctx.raw.label}: ${ctx.raw.x} ${metricLabel}, ${ctx.raw.y.toLocaleString()} docs`;
             },
           },
@@ -389,6 +450,10 @@ function wireFilterControls() {
   document.getElementById("scatter-x-metric").addEventListener("change", (e) => {
     state.scatterXMetric = e.target.value;
     refresh();
+  });
+
+  SCATTER_VIEWS.forEach(({ key }) => {
+    document.getElementById(`scatter-view-${key}`).addEventListener("change", refresh);
   });
 
   document.querySelectorAll("#data-table th").forEach((th) => {

@@ -75,11 +75,15 @@ config alone and a fifth via a custom parser as worked examples.
   output is one `.html` file you can email or drop anywhere and it still works exactly
   the same when opened directly, no server required.
 - **KPI tiles, adoption charts, hardware distributions, and a documents-vs-hardware
-  scatter plot** (with a trend line showing the average document count at each
-  hardware level, plus an optional smoothed variant — each toggleable independently via
-  the chart's own legend, same as the raw data points) — built for real questions like
-  "how many deployments run connector X" or "how much CPU/RAM does a deployment with N
-  documents typically need."
+  scatter plot** — switchable between CPU cores, RAM, or disk/index size on the X axis,
+  with a trend line and an optional smoothed variant per series (each toggleable
+  independently via the chart's own legend, same as the raw data points). A separate
+  three-way toggle (PostgreSQL / MSSQL / both combined, any combination at once) overlays
+  each database engine's series on the same shared axes — useful since disk sizing in
+  particular scales very differently by database engine, and a shared axis makes that
+  comparison direct instead of needing separately-scaled charts. Built for real
+  questions like "how many deployments run connector X" or "how much CPU/RAM/disk does
+  a deployment with N documents typically need, and does that differ by database type."
 - **Filter by report date, free text, major version, connector, module, or database
   type** — major version (4.x/5.x/6.x/7.x...) is auto-detected from whatever versions
   are actually present, not a hardcoded list.
