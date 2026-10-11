@@ -1,0 +1,27 @@
+####################### HOST REPORT #######################
+Client: Example Test Co
+Captured: 2026-02-18 09:40:00
+Build: 5.2.0
+
+###################### MACHINE #######################
+CPU Count: 12
+Memory: 48 GB
+OS Build: Windows Server 2022 Datacenter
+
+######################## STORAGE ########################
+Data Engine: POSTGRES
+Catalog Size: 0.512 TB
+
+################## SOURCE SUMMARY #####################
+sourceName: filesystem
+recordCount: 184,000
+
+sourceName: mail
+recordCount: 940,500
+
+####################### ADD-ONS #########################
+Compliance Module: Enabled
+Copilot Mode: active
+
+####################### RUN TYPE #########################
+Purpose: diagnostic

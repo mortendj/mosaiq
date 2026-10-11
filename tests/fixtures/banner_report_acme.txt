@@ -1,0 +1,26 @@
+####################### REPORT INFO ########################
+Customer: Acme Nordics
+Local time: 2026-05-14 10:15:00
+User: acme-search-prod\prod-admin
+Script version: FleetProbe v. 1.8.4 (2026-05-01 09:00)
+Report type: troubleshooting
+
+###################### HOSTING SERVER #######################
+OS: Microsoft Windows Server 2022 Standard, v. 10.0.20348
+CPU cores: 8
+RAM: 64 GB
+Net Status: Private IP
+
+###################### PLATFORM INFO #########################
+Platform version: 7.19.0
+Connectors in actual use: sharepoint, fileserver, exchange
+
+####################### DATABASE INFO #######################
+Database type: POSTGRES
+
+##################### INDEX STATISTICS ######################
+Total documents indexed: 4,250,000
+Total index size: 128 GB
+
+######################### FEATURES ###########################
+Enabled modules: Search, Insights

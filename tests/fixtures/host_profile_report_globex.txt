@@ -1,0 +1,29 @@
+####################### REPORT INFO ########################
+Customer: Globex Industries
+Local time: 2026-07-20 14:05:00
+User: GLOBEX\prod-admin
+Agent version: 1.0.0 (2026-07-01)
+NodeAudit version: 1.2.0 (2026-07-10)
+
+###################### HOST IDENTITY ########################
+Hostname: globex-search-01.globex.local
+Operating system: Microsoft Windows Server 2022 Standard, v. 10.0.20348
+Machine ID: synthetic-machine-id
+
+##################### SYSTEM RESOURCES #######################
+CPU cores: 16
+RAM capacity: 96 GB
+
+################## PLATFORM INSTALLATION #####################
+Platform version: 7.20.0
+Connectors in actual use: sharepoint, exchange, web, fileserver
+
+####################### DATABASE INFO ########################
+Database type: POSTGRES
+
+##################### INDEX STATISTICS #######################
+Total documents indexed: 12,400,000
+Total index size: 310 GB
+
+######################### FEATURES ############################
+Enabled modules: Search, Insights, Assistant

@@ -1,0 +1,5 @@
+{
+  "sources": [
+    {"type": "directory", "path": "nodestat_reports", "extensions": [".json"]}
+  ]
+}

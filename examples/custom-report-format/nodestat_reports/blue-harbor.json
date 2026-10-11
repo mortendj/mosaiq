@@ -1,0 +1,10 @@
+{
+  "customer": "Blue Harbor Logistics",
+  "scan_date": "2026-04-02",
+  "app_version": "3.8.1",
+  "hardware": {"cpu_cores": 8, "ram_gb": 32},
+  "database": "MSSQL",
+  "integrations": ["email-sync", "file-share", "crm-bridge"],
+  "features_enabled": ["search", "insights"],
+  "index": {"size_gb": 54.2, "document_count": 812000}
+}

@@ -1,0 +1,8 @@
+{
+  "sources": [
+    {"type": "directory", "path": "stacksentry_reports"}
+  ],
+  "parsers": [
+    {"type": "mapped-field", "config_file": "stacksentry-fields.json"}
+  ]
+}

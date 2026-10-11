@@ -1,0 +1,24 @@
+####################### HOST REPORT #######################
+Client: Lakeside Timber Co
+Captured: 2025-11-30 14:05:00
+Build: 5.0.3
+
+###################### MACHINE #######################
+CPU Count: 6
+Memory: 24 GB
+OS Build: Windows Server 2019 Standard
+
+######################## STORAGE ########################
+Data Engine: MSSQL
+Catalog Size: 38,900 MB
+
+################## SOURCE SUMMARY #####################
+sourceName: filesystem
+recordCount: 61,200
+
+####################### ADD-ONS #########################
+Compliance Module: Disabled
+Copilot Mode: disabled
+
+####################### RUN TYPE #########################
+Purpose: diagnostic

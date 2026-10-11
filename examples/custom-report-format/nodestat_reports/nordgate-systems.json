@@ -1,0 +1,10 @@
+{
+  "customer": "Nordgate Systems",
+  "scan_date": "2025-12-15",
+  "app_version": "3.6.0",
+  "hardware": {"cpu_cores": 16, "ram_gb": 64},
+  "database": "POSTGRES",
+  "integrations": ["file-share", "web-portal"],
+  "features_enabled": ["search"],
+  "index": {"size_gb": 128.7, "document_count": 2150000}
+}

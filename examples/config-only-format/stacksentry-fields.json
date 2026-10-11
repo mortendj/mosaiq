@@ -1,0 +1,26 @@
+{
+  "format_name": "stacksentry-text",
+  "sniff_requires": ["HOST REPORT"],
+  "fields": {
+    "deployment_name": {"keys": ["Client"]},
+    "report_date": {"keys": ["Captured"], "type": "date"},
+    "product_version": {"keys": ["Build"]},
+    "database_type": {"keys": ["Data Engine"]},
+    "os_name": {"keys": ["OS Build"]},
+    "cpu_cores": {"keys": ["CPU Count"], "type": "int"},
+    "ram_gb": {"keys": ["Memory"], "type": "size_gb"},
+    "index_size_gb": {"keys": ["Catalog Size"], "type": "size_gb"}
+  },
+  "document_count": {
+    "name_field": "sourceName",
+    "count_field": "recordCount"
+  },
+  "modules": {
+    "always": ["Search"],
+    "rules": [
+      {"module": "Auditor", "key": "Compliance Module", "contains": "Enabled"},
+      {"module": "Agent", "key": "Copilot Mode", "not_in": ["", "disabled", "off", "none", "inactive"]}
+    ]
+  },
+  "exclude_if": {"key": "Purpose", "values": ["smoke-test"]}
+}

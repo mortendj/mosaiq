@@ -1,0 +1,7 @@
+####################### HOST REPORT #######################
+Client: Smoke Test Runner
+Captured: 2026-01-01 00:00:00
+Build: 5.2.0
+
+####################### RUN TYPE #########################
+Purpose: smoke-test
