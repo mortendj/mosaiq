@@ -1,9 +1,10 @@
-# Example: adding support for any report format
+# Custom report format
 
-Mosaiq ships with parsers for three report shapes already in active use by some of
-its users today (see the main README's "Formats supported today" table). That list
-isn't special or closed — adding support for *any other* format is the exact same
-two-step recipe, demonstrated here against a deliberately unrelated, fictional tool
+The other of the two ways to teach Mosaiq a new report format — see
+[`../README.md`](../README.md) for the full quickstart walkthrough this fits into, and
+[`../config-only-format/`](../config-only-format/) for the no-code path when your
+report happens to be "section header, then key: value lines" shaped. This path is for
+everything else: demonstrated here against a deliberately unrelated, fictional tool
 ("NodeStat") that exports JSON instead of the banner/markdown text the bundled
 parsers expect. All the data here is made up; this is the same pattern you'd use to
 teach Mosaiq your own real-world tool, whatever shape its reports come in.
@@ -45,7 +46,7 @@ Extending Mosaiq to a new format is always two separate things:
 ## Running it
 
 ```bash
-cd examples/custom-report-format
+cd quickstart/custom-report-format
 python build_example.py
 ```
 

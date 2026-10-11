@@ -1,0 +1,6 @@
+{
+  "sources": [
+    {"type": "directory", "path": "../../tests/fixtures"},
+    {"type": "directory", "path": "extra_reports"}
+  ]
+}

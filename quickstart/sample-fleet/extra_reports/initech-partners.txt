@@ -1,0 +1,26 @@
+####################### REPORT INFO ########################
+Customer: Initech Partners
+Local time: 2024-03-10 09:00:00
+User: initech-search\svc-report
+Script version: FleetProbe v. 1.5.2 (2024-03-01 08:00)
+Report type: troubleshooting
+
+###################### HOSTING SERVER #######################
+OS: Microsoft Windows Server 2016 Standard, v. 10.0.14393
+CPU cores: 4
+RAM: 16 GB
+Net Status: Private IP
+
+###################### PLATFORM INFO #########################
+Platform version: 5.8.0
+Connectors in actual use: fileserver
+
+####################### DATABASE INFO #######################
+Database type: MYSQL
+
+##################### INDEX STATISTICS ######################
+Total documents indexed: 150,000
+Total index size: 8 GB
+
+######################### FEATURES ###########################
+Enabled modules: Search

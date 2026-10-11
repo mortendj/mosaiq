@@ -1,9 +1,11 @@
-# Example: adding a format with config only, no code
+# Config-only format
 
-This is the other way to teach Mosaiq a new report format — not by writing a parser
-in Python (see `examples/custom-report-format/` for that), but purely through a
-config file, for any report whose data lives in the "section header, then key: value
-lines" shape (the same shape Mosaiq's three bundled parsers already use).
+One of the two ways to teach Mosaiq a new report format — see
+[`../README.md`](../README.md) for the full quickstart walkthrough this fits into, and
+[`../custom-report-format/`](../custom-report-format/) for the other way (writing a
+parser in Python). This path needs no code at all: just a config file, for any report
+whose data lives in the "section header, then key: value lines" shape (the same shape
+Mosaiq's three bundled parsers already use).
 
 The fictional tool here, "StackSentry", is unrelated to anything else in this repo
 and has its own field names nobody's seen before — `Client`, `Captured`, `CPU Count`,
@@ -26,8 +28,8 @@ and has its own field names nobody's seen before — `Client`, `Captured`, `CPU 
 From the repo root, using the stock CLI — no example-specific script at all:
 
 ```bash
-python -m mosaiq build --config examples/config-only-format/stacksentry-config.json \
-    --output examples/config-only-format/dashboard.html
+python -m mosaiq build --config quickstart/config-only-format/stacksentry-config.json \
+    --output quickstart/config-only-format/dashboard.html
 ```
 
 You should see one document reported as unparsed (`smoke-test-runner.txt` — correctly

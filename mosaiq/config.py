@@ -2,7 +2,7 @@
 optionally which custom parser(s) to register alongside the built-in ones, so a
 single build can combine a local folder with one or more Confluence page trees and
 teach Mosaiq a report format without writing a committed parser. See README for the
-file format, and examples/config-only-format/ for a complete worked example.
+file format, and quickstart/config-only-format/ for a complete worked example.
 
 Any relative path inside the config file (a `directory` source's `path`, a
 `mapped-field` parser's `config_file`) is resolved relative to the config file's own

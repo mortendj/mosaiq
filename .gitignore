@@ -8,4 +8,4 @@ venv/
 dist/
 local-data/
 .mosaiq-credentials
-examples/*/dashboard.html
+quickstart/*/dashboard.html

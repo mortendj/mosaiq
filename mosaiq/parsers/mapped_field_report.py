@@ -9,7 +9,7 @@ names out of a public repo entirely: the code here is 100% generic, and the one
 thing that's specific to any given real format - its literal section/field names -
 lives only in a config file you load at runtime, which you simply don't commit.
 
-See examples/config-only-format/ for a complete worked example and the config
+See quickstart/config-only-format/ for a complete worked example and the config
 schema, and README.md for the summary.
 """
 
