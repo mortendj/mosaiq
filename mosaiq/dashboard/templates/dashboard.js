@@ -222,6 +222,18 @@ function averageDocumentsByX(points) {
     .sort((a, b) => a.x - b.x);
 }
 
+// Centered moving average over the already-per-x-bucket trend line, not the raw
+// points - softens bucket-to-bucket zigzag (often just one or two deployments per
+// bucket) without needing evenly-spaced x values.
+function smoothTrend(trend, windowSize = 3) {
+  const half = Math.floor(windowSize / 2);
+  return trend.map((point, i) => {
+    const window = trend.slice(Math.max(0, i - half), Math.min(trend.length, i + half + 1));
+    const average = window.reduce((sum, p) => sum + p.y, 0) / window.length;
+    return { x: point.x, y: average };
+  });
+}
+
 function upsertScatterChart(filtered) {
   const metric = state.scatterXMetric;
   const metricLabel = metric === "cpu_cores" ? "CPU cores" : "RAM (GB)";
@@ -229,6 +241,7 @@ function upsertScatterChart(filtered) {
     .filter((d) => d[metric] && d.document_count)
     .map((d) => ({ x: d[metric], y: d.document_count, label: d.deployment_name }));
   const trend = averageDocumentsByX(points);
+  const smoothed = smoothTrend(trend);
 
   const config = {
     type: "scatter",
@@ -251,6 +264,18 @@ function upsertScatterChart(filtered) {
           tension: 0,
           fill: false,
         },
+        {
+          type: "line",
+          label: "Smoothed trend",
+          data: smoothed,
+          borderColor: PALETTE[5],
+          backgroundColor: PALETTE[5],
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+        },
       ],
     },
     options: {
@@ -258,10 +283,13 @@ function upsertScatterChart(filtered) {
         legend: { display: true, position: "top", labels: { boxWidth: 12 } },
         tooltip: {
           callbacks: {
-            label: (ctx) =>
-              ctx.dataset.type === "line"
-                ? `Average at ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`
-                : `${ctx.raw.label}: ${ctx.raw.x} ${metricLabel}, ${ctx.raw.y.toLocaleString()} docs`,
+            label: (ctx) => {
+              if (ctx.dataset.label === "Smoothed trend")
+                return `Smoothed near ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
+              if (ctx.dataset.type === "line")
+                return `Average at ${ctx.raw.x} ${metricLabel}: ${Math.round(ctx.raw.y).toLocaleString()} docs`;
+              return `${ctx.raw.label}: ${ctx.raw.x} ${metricLabel}, ${ctx.raw.y.toLocaleString()} docs`;
+            },
           },
         },
       },

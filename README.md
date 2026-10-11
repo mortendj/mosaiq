@@ -76,8 +76,10 @@ config alone and a fifth via a custom parser as worked examples.
   the same when opened directly, no server required.
 - **KPI tiles, adoption charts, hardware distributions, and a documents-vs-hardware
   scatter plot** (with a trend line showing the average document count at each
-  hardware level) — built for real questions like "how many deployments run connector
-  X" or "how much CPU/RAM does a deployment with N documents typically need."
+  hardware level, plus an optional smoothed variant — each toggleable independently via
+  the chart's own legend, same as the raw data points) — built for real questions like
+  "how many deployments run connector X" or "how much CPU/RAM does a deployment with N
+  documents typically need."
 - **Filter by report date, free text, major version, connector, module, or database
   type** — major version (4.x/5.x/6.x/7.x...) is auto-detected from whatever versions
   are actually present, not a hardcoded list.
