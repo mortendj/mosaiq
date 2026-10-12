@@ -23,6 +23,7 @@ class DeploymentSnapshot:
 
     deployment_name: str
     report_date: date | None
+    customer_id: str | None = None
     product_version: str | None = None
     modules: set[str] = field(default_factory=set)
     connectors: list[str] = field(default_factory=list)
@@ -32,6 +33,8 @@ class DeploymentSnapshot:
     ram_gb: float | None = None
     index_size_gb: float | None = None
     document_count: int | None = None
+    license_expiry: str | None = None
+    license_status: str | None = None
     source_format: str = ""
     source_reference: str = ""
     extra: dict[str, Any] = field(default_factory=dict)

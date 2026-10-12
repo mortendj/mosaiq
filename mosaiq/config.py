@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from mosaiq.enrichment import JsonLookupEnrichment
 from mosaiq.model import RawDocument
 from mosaiq.parsers.mapped_field_report import MappedFieldParser
 from mosaiq.parsers.registry import DEFAULT_PARSERS, ParserRegistry
@@ -86,6 +87,24 @@ def build_registry_from_config(config_path: str | Path) -> ParserRegistry:
     for entry in config.get("parsers", []):
         parsers.append(_build_parser(entry, base_dir))
     return ParserRegistry(parsers)
+
+
+def load_enrichments_from_config(config_path: str | Path) -> list[JsonLookupEnrichment]:
+    """Builds the enrichments listed under the config's "enrichments" key. Returns an
+    empty list when the key is absent, so enrichment is entirely opt-in."""
+    config, base_dir = _load(config_path)
+    return [_build_enrichment(entry, base_dir) for entry in config.get("enrichments", [])]
+
+
+def _build_enrichment(entry: dict, base_dir: Path) -> JsonLookupEnrichment:
+    entry_type = entry.get("type")
+    if entry_type != "json-lookup":
+        raise ValueError(f"Unknown enrichment type {entry_type!r} - expected 'json-lookup'")
+    return JsonLookupEnrichment.from_file(
+        path=_resolve(entry["file"], base_dir),
+        match_on=entry["match_on"],
+        fields=entry["fields"],
+    )
 
 
 def _build_parser(entry: dict, base_dir: Path):

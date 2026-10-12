@@ -196,6 +196,10 @@ __MOSAIQ_CHARTJS_INLINE__
     <h4>Database</h4>
     <div class="checklist" id="filter-database"></div>
   </div>
+  <div class="filter-group" id="filter-group-license">
+    <h4>Licence</h4>
+    <div class="checklist" id="filter-license"></div>
+  </div>
   <button id="reset-filters">Reset filters</button>
 </div>
 
@@ -252,11 +256,13 @@ __MOSAIQ_CHARTJS_INLINE__
         <thead>
           <tr>
             <th data-key="deployment_name">Deployment</th>
+            <th data-key="customer_id">Customer ID</th>
             <th data-key="report_date">Report date</th>
             <th data-key="product_version">Version</th>
             <th data-key="connectors">Connectors</th>
             <th data-key="modules">Modules</th>
             <th data-key="database_type">Database</th>
+            <th data-key="license_status">Licence</th>
             <th data-key="cpu_cores" class="num">CPU cores</th>
             <th data-key="ram_gb" class="num">RAM (GB)</th>
             <th data-key="index_size_gb" class="num">Index (GB)</th>

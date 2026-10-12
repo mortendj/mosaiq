@@ -35,6 +35,9 @@ def _is_newer(candidate: DeploymentSnapshot, existing: DeploymentSnapshot) -> bo
 def _snapshot_to_json(snapshot: DeploymentSnapshot) -> dict:
     return {
         "deployment_name": snapshot.deployment_name,
+        "customer_id": snapshot.customer_id,
+        "license_expiry": snapshot.license_expiry,
+        "license_status": snapshot.license_status,
         "report_date": snapshot.report_date.isoformat() if snapshot.report_date else None,
         "product_version": snapshot.product_version,
         "modules": sorted(snapshot.modules),

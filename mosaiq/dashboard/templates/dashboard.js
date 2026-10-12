@@ -29,6 +29,7 @@ const state = {
   connectors: new Set(),
   modules: new Set(),
   databases: new Set(),
+  licenseStatuses: new Set(),
   sortKey: "deployment_name",
   sortDir: 1,
   scatterXMetric: "cpu_cores",
@@ -61,6 +62,9 @@ function allModules() {
 function allDatabases() {
   return uniqueSorted(DEPLOYMENTS.map((d) => d.database_type));
 }
+function allLicenseStatuses() {
+  return uniqueSorted(DEPLOYMENTS.map((d) => d.license_status));
+}
 
 function renderChecklist(containerId, values, selectedSet) {
   const container = document.getElementById(containerId);
@@ -90,6 +94,7 @@ function applyFilters() {
     if (state.connectors.size && !(d.connectors || []).some((c) => state.connectors.has(c))) return false;
     if (state.modules.size && !(d.modules || []).some((m) => state.modules.has(m))) return false;
     if (state.databases.size && !state.databases.has(d.database_type)) return false;
+    if (state.licenseStatuses.size && !state.licenseStatuses.has(d.license_status)) return false;
     return true;
   });
 }
@@ -395,11 +400,13 @@ function renderTable(filtered) {
     .map(
       (d) => `<tr>
         <td>${d.deployment_name}</td>
+        <td>${d.customer_id || "—"}</td>
         <td>${d.report_date || "—"}</td>
         <td>${d.product_version || "—"}</td>
         <td>${(d.connectors || []).join(", ") || "—"}</td>
         <td>${(d.modules || []).join(", ") || "—"}</td>
         <td>${d.database_type || "—"}</td>
+        <td>${d.license_status || "—"}</td>
         <td class="num">${formatNumber(d.cpu_cores, 0)}</td>
         <td class="num">${formatNumber(d.ram_gb, 0)}</td>
         <td class="num">${formatNumber(d.index_size_gb, 3)}</td>
@@ -427,6 +434,7 @@ function renderChecklists() {
   renderChecklist("filter-connectors", allConnectors(), state.connectors);
   renderChecklist("filter-modules", allModules(), state.modules);
   renderChecklist("filter-database", allDatabases(), state.databases);
+  renderChecklist("filter-license", allLicenseStatuses(), state.licenseStatuses);
 }
 
 function wireFilterControls() {
@@ -473,6 +481,7 @@ function wireFilterControls() {
     state.connectors.clear();
     state.modules.clear();
     state.databases.clear();
+    state.licenseStatuses.clear();
     dateFrom.value = "";
     dateTo.value = "";
     document.getElementById("filter-search").value = "";

@@ -5,17 +5,23 @@ from __future__ import annotations
 import argparse
 import sys
 
-from mosaiq.dashboard.generator import build_dashboard
+from mosaiq.dashboard.generator import build_dashboard, deduplicate_latest_per_deployment
 from mosaiq.parsers.registry import ParserRegistry
 from mosaiq.sources.local_directory import LocalDirectorySource
 
 
 def _build(args: argparse.Namespace) -> int:
+    enrichments = []
     if args.config:
-        from mosaiq.config import build_registry_from_config, load_documents_from_config
+        from mosaiq.config import (
+            build_registry_from_config,
+            load_documents_from_config,
+            load_enrichments_from_config,
+        )
 
         documents = load_documents_from_config(args.config)
         registry = build_registry_from_config(args.config)
+        enrichments = load_enrichments_from_config(args.config)
     elif args.source == "local":
         documents = list(LocalDirectorySource(args.path).discover())
         registry = ParserRegistry()
@@ -38,8 +44,20 @@ def _build(args: argparse.Namespace) -> int:
     for doc in unparsed:
         print(f"[unparsed] {doc.origin_id}: {doc.reason}", file=sys.stderr)
 
+    if enrichments:
+        from mosaiq.enrichment import apply_enrichments
+
+        # Enrich the deduplicated set, which is what actually reaches the page.
+        snapshots = deduplicate_latest_per_deployment(snapshots)
+        for enrichment, matched in apply_enrichments(snapshots, enrichments):
+            print(
+                f"[enrichment] {enrichment.match_on}: matched {matched}/{len(snapshots)} "
+                f"deployment(s) against {len(enrichment.table)} table entries"
+            )
+
     output_path = build_dashboard(snapshots, args.output, unparsed_count=len(unparsed))
-    print(f"Wrote dashboard for {len(snapshots)} deployment(s) to {output_path}")
+    deployment_count = len(deduplicate_latest_per_deployment(snapshots)) if not enrichments else len(snapshots)
+    print(f"Wrote dashboard for {deployment_count} deployment(s) to {output_path}")
     if unparsed:
         print(f"{len(unparsed)} document(s) could not be parsed - see warnings above.")
     return 0

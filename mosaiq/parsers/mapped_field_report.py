@@ -96,6 +96,7 @@ class MappedFieldParser(ReportParser):
         return DeploymentSnapshot(
             deployment_name=self._resolve(flat, "deployment_name", raw.origin_id),
             report_date=self._resolve(flat, "report_date"),
+            customer_id=self._resolve(flat, "customer_id"),
             product_version=self._resolve(flat, "product_version"),
             modules=modules,
             connectors=connectors,
@@ -105,6 +106,7 @@ class MappedFieldParser(ReportParser):
             ram_gb=self._resolve(flat, "ram_gb"),
             index_size_gb=self._resolve(flat, "index_size_gb"),
             document_count=document_count,
+            license_expiry=self._resolve(flat, "license_expiry"),
             source_format=self.format_name,
             source_reference=raw.origin_id,
         )
