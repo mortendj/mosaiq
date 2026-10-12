@@ -18,6 +18,10 @@ __MOSAIQ_CHARTJS_INLINE__
     --accent: #4fd1c5;
     --accent-2: #a78bfa;
     --accent-3: #f6ad55;
+    /* Caps how wide the content column gets on a large monitor. Past roughly this
+       width the charts stop gaining any readability and the eye has to travel too
+       far between a row's first and last column. */
+    --page-max: 1600px;
   }
   @media (prefers-color-scheme: light) {
     :root {
@@ -29,6 +33,18 @@ __MOSAIQ_CHARTJS_INLINE__
     }
   }
   * { box-sizing: border-box; }
+  /* Every top-level band shares one centred column, so the filters, KPI tiles, charts
+     and table all keep the same left and right edges. Centring any one band on its own
+     would break that shared edge - the page background still runs full width. */
+  header,
+  .filters,
+  .kpis,
+  .charts,
+  footer {
+    max-width: var(--page-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
   body {
     margin: 0;
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -47,20 +63,24 @@ __MOSAIQ_CHARTJS_INLINE__
   header h1 span { color: var(--accent); }
   header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
+  /* Grid rather than flex-wrap: with flex, a wrapped row starts below the tallest
+     card of the previous row, which leaves a large dead gap once there are enough
+     filter groups to wrap. Equal auto-fitting columns keep the cards uniform and
+     let every group sit on one row at normal widths. */
   .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
     padding: 18px 32px;
     border-bottom: 1px solid var(--panel-border);
-    align-items: flex-start;
+    align-items: start;
   }
   .filter-group {
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: 10px;
     padding: 10px 14px;
-    min-width: 160px;
+    min-width: 0;
   }
   .filter-group h4 {
     margin: 0 0 8px;
@@ -88,8 +108,27 @@ __MOSAIQ_CHARTJS_INLINE__
     width: 100%;
   }
   .filter-group .checklist { max-height: 140px; overflow-y: auto; }
+  /* The free-input filters share a full-width row below the checklists. Flex rather
+     than more grid columns, so search absorbs the leftover width while the date card
+     stays at its natural size on the right. */
+  .filter-row-wide {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: start;
+  }
+  /* Wide enough to read a full deployment name back, but deliberately not
+     stretched to the width of the page - a text box far longer than anything
+     ever typed into it just looks broken. */
+  #filter-group-search { flex: 0 1 420px; min-width: 0; }
+  #filter-group-date { flex: 0 0 auto; }
+  #filter-group-date label { justify-content: space-between; }
+  /* Lives at the end of the lower filter row: it is a terminal action, not a filter,
+     so it does not belong in the run of equal-weight cards above. */
   #reset-filters {
     align-self: center;
+    flex: 0 0 auto;
     background: var(--accent);
     color: #04201c;
     border: none;
@@ -172,15 +211,6 @@ __MOSAIQ_CHARTJS_INLINE__
 
 <div class="filters">
   <div class="filter-group">
-    <h4>Report date</h4>
-    <label>From <input type="date" id="filter-date-from" /></label>
-    <label>To <input type="date" id="filter-date-to" /></label>
-  </div>
-  <div class="filter-group">
-    <h4>Search</h4>
-    <input type="text" id="filter-search" placeholder="Deployment name…" />
-  </div>
-  <div class="filter-group">
     <h4>Major version</h4>
     <div class="checklist" id="filter-major-version"></div>
   </div>
@@ -200,7 +230,24 @@ __MOSAIQ_CHARTJS_INLINE__
     <h4>Licence</h4>
     <div class="checklist" id="filter-license"></div>
   </div>
-  <button id="reset-filters">Reset filters</button>
+  <!-- The two free-input filters get a row of their own below the checklists. Both
+       read better wide than boxed into a narrow column, and keeping them together
+       makes any wrapping predictable. They stay left-aligned with the cards above
+       rather than spreading to the page edges, so the whole bar reads as one block
+       of filters: search first because it is the primary action, then the date
+       range beside it. -->
+  <div class="filter-row-wide">
+    <div class="filter-group" id="filter-group-search">
+      <h4>Search</h4>
+      <input type="text" id="filter-search" placeholder="Deployment name…" />
+    </div>
+    <div class="filter-group" id="filter-group-date">
+      <h4>Report date</h4>
+      <label>From <input type="date" id="filter-date-from" /></label>
+      <label>To <input type="date" id="filter-date-to" /></label>
+    </div>
+    <button id="reset-filters">Reset filters</button>
+  </div>
 </div>
 
 <div class="kpis" id="kpis"></div>

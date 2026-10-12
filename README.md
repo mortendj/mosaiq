@@ -86,7 +86,12 @@ config alone and a fifth via a custom parser as worked examples.
   a deployment with N documents typically need, and does that differ by database type."
 - **Filter by report date, free text, major version, connector, module, or database
   type** — major version (4.x/5.x/6.x/7.x...) is auto-detected from whatever versions
-  are actually present, not a hardcoded list.
+  are actually present, not a hardcoded list. Filters whose values the data doesn't
+  supply hide themselves rather than showing an empty box.
+- **Enrichment from outside the reports** — join a lookup table keyed by any snapshot
+  field onto the dashboard, for facts a report can't tell you about itself: contract
+  state, support tier, ownership, licence validity. See
+  [Enriching with data the reports don't contain](#enriching-with-data-the-reports-dont-contain).
 - **A sortable, filterable data table** underneath everything, for when a chart isn't
   specific enough.
 
@@ -204,13 +209,64 @@ recommended way to adapt Mosaiq to a real, proprietary report format you can't m
 public: the code involved is 100% generic either way, and the field-mapping file is
 the *only* thing that ever needs to stay local.
 
+## Enriching with data the reports don't contain
+
+A report describes a deployment as it saw itself at the moment it was captured. Some
+things a fleet view wants aren't in it at all, or are stale there because they change
+after a report is written — contract state, support tier, ownership, licence validity.
+Those live in some other system, keyed by an identifier the report does carry.
+
+An `"enrichments"` entry in your config file joins that in:
+
+```json
+{
+  "sources": [ ... ],
+  "enrichments": [
+    {
+      "type": "json-lookup",
+      "file": "license-status.json",
+      "match_on": "customer_id",
+      "fields": {"license_status": "status"}
+    }
+  ]
+}
+```
+
+`match_on` names the snapshot field used as the lookup key, and `fields` maps snapshot
+field name → key within the looked-up record. The file itself is a flat object of
+key → record:
+
+```json
+{
+  "4200001": {"status": "Valid"},
+  "4200002": {"status": "Perpetual"}
+}
+```
+
+Keys are compared as strings with surrounding whitespace stripped. A snapshot whose key
+is missing, empty, or absent from the table is left untouched, so a partial table
+degrades gracefully instead of blanking values that are already there. Each build prints
+how many deployments an enrichment actually matched, so a table that silently joins
+nothing is visible rather than quiet.
+
+Producing that file is deliberately out of scope. It's usually a small local script
+against a system that has no business being a build-time dependency — and keeping it
+outside Mosaiq means the system's specifics, and any sensitive data it holds, never
+need to enter this repo. Mosaiq stays agnostic about where the values came from and
+what they mean; it only joins them and shows them.
+
+Relative paths resolve against the config file's own folder, the same as sources and
+parsers.
+
 ## Project layout
 
 ```
 mosaiq/
   model.py                    Normalized DeploymentSnapshot / RawDocument dataclasses
   cli.py, __main__.py         `python -m mosaiq build ...`
-  config.py                   Loads a --config JSON file into documents + a parser registry
+  config.py                   Loads a --config JSON file into documents, a parser
+                               registry, and any enrichments
+  enrichment.py               Joins external per-deployment data on by a snapshot field
   sources/
     base.py                   Source contract
     local_directory.py        Reads reports from a local folder
@@ -232,7 +288,7 @@ mosaiq/
 tests/
   fixtures/                   Synthetic sample reports (fictional company names only)
   test_parsers.py, test_confluence_source.py, test_config.py,
-  test_fields.py, test_mapped_field_parser.py
+  test_fields.py, test_mapped_field_parser.py, test_enrichment.py
 quickstart/
   README.md                    Start here - the full walkthrough, start to finish
   sample-fleet/                Run this first - the bundled formats plus two extra

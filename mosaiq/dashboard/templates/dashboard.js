@@ -69,6 +69,11 @@ function allLicenseStatuses() {
 function renderChecklist(containerId, values, selectedSet) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
+  // Hide the whole card when the data has nothing to offer for it, rather than
+  // leaving an empty bordered box. Licence status in particular only exists when an
+  // enrichment supplies it, so a build without one should not advertise the filter.
+  const group = container.closest(".filter-group");
+  if (group) group.hidden = values.length === 0;
   values.forEach((value) => {
     const label = document.createElement("label");
     const checkbox = document.createElement("input");
