@@ -186,7 +186,10 @@ __MOSAIQ_CHARTJS_INLINE__
 
   table {
     width: 100%;
-    border-collapse: collapse;
+    /* separate + zero spacing rather than collapse: collapsed borders render
+       unreliably on sticky cells, and the first column below is sticky. */
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.85rem;
   }
   th, td {
@@ -199,6 +202,33 @@ __MOSAIQ_CHARTJS_INLINE__
   th { cursor: pointer; color: var(--muted); user-select: none; }
   th:hover { color: var(--text); }
   .table-wrap { overflow-x: auto; }
+  /* Freeze the identifying column so it stays put while the rest of the row scrolls
+     sideways. The table is wider than any screen, and without this you lose track of
+     which deployment a row belongs to as soon as you scroll right.
+
+     Deliberately keyed to :first-child rather than to a named column, so it keeps
+     working if the leading column changes - e.g. dropping the name and leading with
+     the customer id to anonymize the page for sharing. */
+  #data-table th:first-child,
+  #data-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--panel);
+    z-index: 1;
+  }
+  #data-table th:first-child { z-index: 2; }
+  /* Drawn as a pseudo-element, not a border: a border on a sticky cell can detach
+     from it mid-scroll. */
+  #data-table th:first-child::after,
+  #data-table td:first-child::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: -1px;
+    width: 1px;
+    background: var(--panel-border);
+  }
   footer { padding: 18px 32px 40px; color: var(--muted); font-size: 0.8rem; }
 </style>
 </head>
