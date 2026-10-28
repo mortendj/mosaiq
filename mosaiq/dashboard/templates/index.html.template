@@ -256,9 +256,17 @@ __MOSAIQ_CHARTJS_INLINE__
     <h4>Database</h4>
     <div class="checklist" id="filter-database"></div>
   </div>
+  <div class="filter-group" id="filter-group-os">
+    <h4>Windows Server</h4>
+    <div class="checklist" id="filter-os"></div>
+  </div>
   <div class="filter-group" id="filter-group-license">
     <h4>Licence</h4>
     <div class="checklist" id="filter-license"></div>
+  </div>
+  <div class="filter-group" id="filter-group-restart">
+    <h4>Auto restart</h4>
+    <div class="checklist" id="filter-restart"></div>
   </div>
   <!-- The two free-input filters get a row of their own below the checklists. Both
        read better wide than boxed into a narrow column, and keeping them together
@@ -339,6 +347,7 @@ __MOSAIQ_CHARTJS_INLINE__
             <th data-key="connectors">Connectors</th>
             <th data-key="modules">Modules</th>
             <th data-key="database_type">Database</th>
+            <th data-key="os_name">Windows Server</th>
             <th data-key="license_status">Licence</th>
             <th data-key="cpu_cores" class="num">CPU cores</th>
             <th data-key="ram_gb" class="num">RAM (GB)</th>

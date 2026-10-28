@@ -29,7 +29,9 @@ const state = {
   connectors: new Set(),
   modules: new Set(),
   databases: new Set(),
+  osReleases: new Set(),
   licenseStatuses: new Set(),
+  autoRestart: new Set(),
   sortKey: "deployment_name",
   sortDir: 1,
   scatterXMetric: "cpu_cores",
@@ -44,6 +46,21 @@ function majorVersionOf(productVersion) {
   if (!productVersion) return null;
   const match = String(productVersion).match(/^(\d+)\./);
   return match ? `${match[1]}.x` : null;
+}
+
+// "Microsoft Windows Server 2022 Datacenter Azure Edition, v. 10.0.20348" -> "2022".
+// Edition and build number split a single release into a handful of near-identical
+// entries nobody wants to tick one by one, and the product name is already carried by
+// the filter's own heading - so what is left is the year, the only part that differs.
+// Auto-detected the same way majorVersionOf is: the years come from the data, so a
+// newer release shows up on its own without a code change. An OS carrying no year
+// keeps its own name minus the build suffix rather than dropping out of the filter.
+function osReleaseOf(osName) {
+  if (!osName) return null;
+  const text = String(osName);
+  const year = text.match(/\b(?:19|20)\d{2}\b/);
+  if (year) return year[0];
+  return text.split(",")[0].replace(/^Microsoft\s+/i, "").trim() || null;
 }
 
 function uniqueSorted(values) {
@@ -62,8 +79,17 @@ function allModules() {
 function allDatabases() {
   return uniqueSorted(DEPLOYMENTS.map((d) => d.database_type));
 }
+function allOsReleases() {
+  return uniqueSorted(DEPLOYMENTS.map((d) => osReleaseOf(d.os_name)));
+}
 function allLicenseStatuses() {
   return uniqueSorted(DEPLOYMENTS.map((d) => d.license_status));
+}
+// "Does this deployment restart itself on a schedule" - already collapsed to Yes/No
+// by the parser, because the underlying value is a free-text time phrase that would
+// make one filter entry per distinct restart time.
+function allAutoRestart() {
+  return uniqueSorted(DEPLOYMENTS.map((d) => d.auto_restart));
 }
 
 function renderChecklist(containerId, values, selectedSet) {
@@ -99,7 +125,9 @@ function applyFilters() {
     if (state.connectors.size && !(d.connectors || []).some((c) => state.connectors.has(c))) return false;
     if (state.modules.size && !(d.modules || []).some((m) => state.modules.has(m))) return false;
     if (state.databases.size && !state.databases.has(d.database_type)) return false;
+    if (state.osReleases.size && !state.osReleases.has(osReleaseOf(d.os_name))) return false;
     if (state.licenseStatuses.size && !state.licenseStatuses.has(d.license_status)) return false;
+    if (state.autoRestart.size && !state.autoRestart.has(d.auto_restart)) return false;
     return true;
   });
 }
@@ -397,6 +425,9 @@ function renderTable(filtered) {
     if (av === null || av === undefined) return 1;
     if (bv === null || bv === undefined) return -1;
     if (key === "product_version") return compareNatural(av, bv) * state.sortDir;
+    // The column shows the release the raw OS string was reduced to, so it has to sort
+    // on that too - otherwise edition ("Datacenter" before "Standard") decides the order.
+    if (key === "os_name") return compareNatural(osReleaseOf(av), osReleaseOf(bv)) * state.sortDir;
     return (av > bv ? 1 : -1) * state.sortDir;
   });
 
@@ -411,6 +442,7 @@ function renderTable(filtered) {
         <td>${(d.connectors || []).join(", ") || "—"}</td>
         <td>${(d.modules || []).join(", ") || "—"}</td>
         <td>${d.database_type || "—"}</td>
+        <td>${osReleaseOf(d.os_name) || "—"}</td>
         <td>${d.license_status || "—"}</td>
         <td class="num">${formatNumber(d.cpu_cores, 0)}</td>
         <td class="num">${formatNumber(d.ram_gb, 0)}</td>
@@ -439,7 +471,9 @@ function renderChecklists() {
   renderChecklist("filter-connectors", allConnectors(), state.connectors);
   renderChecklist("filter-modules", allModules(), state.modules);
   renderChecklist("filter-database", allDatabases(), state.databases);
+  renderChecklist("filter-os", allOsReleases(), state.osReleases);
   renderChecklist("filter-license", allLicenseStatuses(), state.licenseStatuses);
+  renderChecklist("filter-restart", allAutoRestart(), state.autoRestart);
 }
 
 function wireFilterControls() {
@@ -486,7 +520,9 @@ function wireFilterControls() {
     state.connectors.clear();
     state.modules.clear();
     state.databases.clear();
+    state.osReleases.clear();
     state.licenseStatuses.clear();
+    state.autoRestart.clear();
     dateFrom.value = "";
     dateTo.value = "";
     document.getElementById("filter-search").value = "";

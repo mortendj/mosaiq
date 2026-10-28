@@ -22,5 +22,9 @@
       {"module": "Agent", "key": "Copilot Mode", "not_in": ["", "disabled", "off", "none", "inactive"]}
     ]
   },
+  "auto_restart": {
+    "keys": ["Restart Window", "Scheduled Restart"],
+    "off_values": ["", "none", "not scheduled"]
+  },
   "exclude_if": {"key": "Purpose", "values": ["smoke-test"]}
 }

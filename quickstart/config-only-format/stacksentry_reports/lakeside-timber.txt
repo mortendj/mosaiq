@@ -20,5 +20,8 @@ recordCount: 61,200
 Compliance Module: Disabled
 Copilot Mode: disabled
 
+##################### MAINTENANCE #########################
+Restart Window: None
+
 ####################### RUN TYPE #########################
 Purpose: diagnostic

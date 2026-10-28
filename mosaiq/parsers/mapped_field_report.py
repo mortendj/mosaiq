@@ -32,6 +32,9 @@ _FIELD_CONVERTERS = {
     "list": fields.split_list,
 }
 
+_AUTO_RESTART_ON = "Yes"
+_AUTO_RESTART_OFF = "No"
+
 
 class MappedFieldParser(ReportParser):
     def __init__(self, config: dict):
@@ -58,6 +61,27 @@ class MappedFieldParser(ReportParser):
         if raw_value is None:
             return default
         return _FIELD_CONVERTERS[spec.get("type", "string")](raw_value)
+
+    def _resolve_auto_restart(self, flat: dict[str, str]) -> str | None:
+        """Collapses whatever a report says about its scheduled-restart task down to
+        a plain yes/no. The value itself is free text - a weekday-and-time phrase, or
+        some "nothing is scheduled" sentinel - which differs per format and per
+        locale, so it makes a useless filter value, while *whether a deployment
+        restarts itself at all* is a perfectly good fleet-wide question.
+
+        A report that doesn't mention restarts at all leaves the field unset rather
+        than answering "No", so an unasked question never reads as a negative.
+        """
+        config = self.config.get("auto_restart")
+        if not config:
+            return None
+        off_values = {value.strip().lower() for value in config.get("off_values", [])}
+        for key in config["keys"]:
+            value = flat.get(key)
+            if value is None or value.startswith(self._error_marker):
+                continue
+            return _AUTO_RESTART_OFF if value.strip().lower() in off_values else _AUTO_RESTART_ON
+        return None
 
     def sniff(self, text: str) -> bool:
         flat = flatten_any_sections(text)
@@ -107,6 +131,7 @@ class MappedFieldParser(ReportParser):
             index_size_gb=self._resolve(flat, "index_size_gb"),
             document_count=document_count,
             license_expiry=self._resolve(flat, "license_expiry"),
+            auto_restart=self._resolve_auto_restart(flat),
             source_format=self.format_name,
             source_reference=raw.origin_id,
         )

@@ -56,6 +56,10 @@ other two.
       {"module": "Agent", "key": "Copilot Mode", "not_in": ["", "disabled", "off"]}
     ]
   },
+  "auto_restart": {
+    "keys": ["Restart Window", "Scheduled Restart"],
+    "off_values": ["", "none", "not scheduled"]
+  },
   "exclude_if": {"key": "Purpose", "values": ["smoke-test"]}
 }
 ```
@@ -76,6 +80,14 @@ other two.
   `"rules"` adds a module when a field `"contains"` a substring, or when a field's
   value is `"not_in"` a given set (case-insensitive) — i.e. "present and not one of
   these inactive-looking values." Multiple rules can target the same module name.
+- **`auto_restart`** *(optional)* — answers "does this deployment restart itself on a
+  schedule," surfaced as the dashboard's **Auto restart** filter. `"keys"` is tried in order
+  like `fields`; the first key the report actually carries decides the answer — `No` if
+  its value is one of `"off_values"` (case-insensitive, exact), `Yes` otherwise. The raw
+  value is deliberately thrown away: it's a free-text time phrase, so filtering on it
+  directly would give you one entry per distinct restart time instead of a yes/no. A
+  report carrying none of the keys leaves the field unset rather than answering `No`, so
+  a format that simply doesn't report restarts isn't counted as having none.
 - **`exclude_if`** *(optional)* — drop any document where a field's value is in the
   given list. Checked as part of recognizing the document, so an excluded document
   shows up in the build output as "could not be parsed" rather than silently

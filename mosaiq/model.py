@@ -35,6 +35,7 @@ class DeploymentSnapshot:
     document_count: int | None = None
     license_expiry: str | None = None
     license_status: str | None = None
+    auto_restart: str | None = None
     source_format: str = ""
     source_reference: str = ""
     extra: dict[str, Any] = field(default_factory=dict)

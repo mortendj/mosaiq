@@ -27,12 +27,21 @@ CONFIG = {
             {"module": "Agent", "key": "Copilot Mode", "not_in": ["", "disabled", "off", "none", "inactive"]},
         ],
     },
+    "auto_restart": {
+        "keys": ["Restart Window", "Scheduled Restart"],
+        "off_values": ["", "none", "not scheduled"],
+    },
     "exclude_if": {"key": "Purpose", "values": ["smoke-test"]},
 }
 
 
 def _load(name: str) -> RawDocument:
     return RawDocument(text=(FIXTURES / name).read_text(encoding="utf-8"), origin_id=name)
+
+
+def _inline(body: str) -> RawDocument:
+    text = "####################### HOST REPORT #######################\nClient: Inline Co\n" + body
+    return RawDocument(text=text, origin_id="inline")
 
 
 def test_sniffs_and_parses_a_report_format_never_seen_by_any_built_in_parser():
@@ -53,7 +62,34 @@ def test_sniffs_and_parses_a_report_format_never_seen_by_any_built_in_parser():
     assert snapshot.connectors == ["filesystem", "mail"]
     assert snapshot.document_count == 1_124_500
     assert snapshot.modules == {"Search", "Auditor", "Agent"}
+    assert snapshot.auto_restart == "Yes"
     assert snapshot.source_format == "test-mapped-format"
+
+
+def test_auto_restart_reads_no_from_a_nothing_is_scheduled_sentinel():
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Restart Window: Not scheduled\n"))
+
+    assert snapshot.auto_restart == "No"
+
+
+def test_auto_restart_falls_back_to_a_later_key_spelling():
+    """Tools rename their own field labels between versions, and both spellings stay
+    in the wild as long as old reports do - the same reason `fields` takes a key list."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Scheduled Restart: Daily at 01:00\n"))
+
+    assert snapshot.auto_restart == "Yes"
+
+
+def test_auto_restart_is_unset_when_the_report_never_mentions_restarts():
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Build: 5.2.0\n"))
+
+    assert snapshot.auto_restart is None
 
 
 def test_exclude_if_rejects_matching_documents_via_sniff():

@@ -23,5 +23,8 @@ recordCount: 940,500
 Compliance Module: Enabled
 Copilot Mode: active
 
+##################### MAINTENANCE #########################
+Restart Window: Every Sunday at 03:00
+
 ####################### RUN TYPE #########################
 Purpose: diagnostic
