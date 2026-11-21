@@ -96,8 +96,8 @@ function allAutoRestart() {
 // since no report states it outright. Answering a provider's question once for every
 // deployment it runs is the whole point, and it pairs with Auto restart: a provider's
 // customers who restart on no schedule are the ones who will not pick up a new release
-// on their own. A deployment whose report never mentions its network identity has no
-// value here at all and simply drops out of the filter.
+// on their own. Every deployment gets a value (a provider's name, or "Other"), so the
+// ticks here partition the fleet rather than covering some of it.
 function allHostingProviders() {
   return uniqueSorted(DEPLOYMENTS.map((d) => d.hosting_provider));
 }

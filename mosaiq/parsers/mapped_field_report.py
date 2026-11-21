@@ -36,18 +36,18 @@ _FIELD_CONVERTERS = {
 _AUTO_RESTART_ON = "Yes"
 _AUTO_RESTART_OFF = "No"
 
-# A deployment whose report does carry the fields, on a domain none of the configured
-# providers claim. Named rather than left blank so the filter can offer the complement
-# ("everything not run by provider X") as something you can actually tick - and
-# deliberately not "self-hosted", which the evidence does not support: an unrecognized
-# domain can just as easily be a provider nobody has configured yet.
+# Every deployment no configured provider claims. One value, not two: whether the
+# report shows a domain nobody owns or no domain at all, the answer to "is this one of
+# the providers I asked about" is the same no, and splitting it would leave the filter
+# unable to offer "everyone else" as a single tick. Deliberately not "self-hosted",
+# which the evidence does not support - an unclaimed machine can just as easily belong
+# to a provider nobody has configured yet.
 _HOSTING_UNMATCHED = "Other"
 
 # Hostnames and domains as they sit inside a larger free-text value, e.g. an adapter
 # line that reads "corp.example.net/Ethernet0" - letters, digits, dots and hyphens,
 # stopping at anything else.
 _DOMAIN_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]*")
-_IPV4_RE = re.compile(r"^\d+(\.\d+)+$")
 
 
 class MappedFieldParser(ReportParser):
@@ -113,14 +113,22 @@ class MappedFieldParser(ReportParser):
         something as specific as "this fleet's machines are run by <company>" without
         naming the company in committed code.
 
+        Everything else is `Other`, including a machine whose report carries no domain
+        at all - one that was never joined to a domain reports a bare computer name, and
+        "no provider of mine owns this" is the same answer either way. The values are
+        meant to partition the fleet, so that ticking every provider plus `Other`
+        accounts for every deployment and "everyone else" stays a single tick.
+
         This is inference from a naming convention, not a stated fact, so treat the
         result as a strong signal rather than proof: it is right about every host whose
         name follows the convention, and silent about one that does not - including a
-        provider's own estate that it has not been told about. A deployment whose report
-        carries no domain at all is left unset rather than answering `Other`, so a
-        format that never reports its network identity is not recorded as being on an
-        unrecognized domain; bare IP addresses are passed over for the same reason,
-        since an address says nothing about who owns the machine.
+        provider's own estate that it has not been told about, and a machine that
+        provider runs without joining it to any domain.
+
+        Asking about no providers at all is not the same question, and does not get the
+        same answer: with none configured the field stays unset for everybody and the
+        filter hides itself, rather than labelling the whole fleet `Other` as though
+        something had been checked and found absent.
 
         Only the first occurrence of each configured key is visible here (the section
         flattener keeps the first and drops later repeats), which matters for a field a
@@ -135,23 +143,22 @@ class MappedFieldParser(ReportParser):
             (provider["label"], [domain.strip().lower().strip(".") for domain in provider["domains"]])
             for provider in config.get("providers", [])
         ]
-        found_a_domain = False
+        if not providers:
+            return None
+
         for key in config["keys"]:
             value = flat.get(key)
             if not value or value.startswith(self._error_marker):
                 continue
             for token in _DOMAIN_TOKEN_RE.findall(value.lower()):
                 token = token.strip(".")
-                if "." not in token or _IPV4_RE.match(token):
-                    continue
-                found_a_domain = True
                 for label, domains in providers:
                     # Matching on a label boundary, never mid-label: a host under
                     # "corp.example.net" is the provider's, and "notcorp.example.net" is
                     # a different domain belonging to whoever registered it.
                     if any(token == domain or token.endswith("." + domain) for domain in domains):
                         return label
-        return _HOSTING_UNMATCHED if found_a_domain else None
+        return _HOSTING_UNMATCHED
 
     def sniff(self, text: str) -> bool:
         flat = flatten_any_sections(text)

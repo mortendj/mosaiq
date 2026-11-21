@@ -103,13 +103,16 @@ other two.
   `cust.northwind-mh.example` matches `abc.cust.northwind-mh.example` and every sibling —
   and a provider running several estates (a shared domain alongside per-customer ones)
   just lists them all. Matching is on a label boundary, so `notcust.example.net` is never
-  read as sitting under `cust.example.net`. A report carrying a domain no provider claims
-  gets `Other` — deliberately not "self-hosted", which the evidence doesn't support, but
-  enough to let the filter offer the complement; one carrying no domain at all (or only
-  bare IP addresses, which say nothing about ownership) is left unset and drops out of
-  the filter instead. Worth taking as a strong signal rather than proof: it's right about
-  every host that follows its provider's naming convention, and silent about one that
-  doesn't — including an estate of the same provider you haven't listed yet.
+  read as sitting under `cust.example.net`. Everything no provider claims is `Other`,
+  including a machine that reports a bare computer name because it was never joined to a
+  domain — the values partition the fleet, so every provider plus `Other` accounts for
+  every deployment and "everyone else" stays one tick. `Other` is deliberately not
+  "self-hosted", which the evidence doesn't support. Configure no providers and the field
+  stays unset for everybody and the filter hides itself, rather than labelling the fleet
+  `Other` as though something had been checked. Worth taking as a strong signal rather
+  than proof: it's right about every host that follows its provider's naming convention,
+  and silent about one that doesn't — an estate you haven't listed, or a machine your
+  provider runs without joining it to a domain.
 - **`exclude_if`** *(optional)* — drop any document where a field's value is in the
   given list. Checked as part of recognizing the document, so an excluded document
   shows up in the build output as "could not be parsed" rather than silently

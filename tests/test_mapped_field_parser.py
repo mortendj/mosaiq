@@ -143,14 +143,15 @@ def test_hosting_provider_falls_back_to_a_later_key_when_the_first_carries_no_do
     assert snapshot.hosting_provider == "Northwind Hosting"
 
 
-def test_hosting_provider_is_unset_when_the_report_only_carries_ip_addresses():
-    """An address is dotted but says nothing about who owns the machine, so a report
-    that identifies itself by IP alone is unknown, not `Other`."""
+def test_hosting_provider_reads_other_when_the_report_carries_no_domain_at_all():
+    """A machine that was never joined to a domain reports a bare computer name. That
+    is still "no provider of mine owns this", so it belongs with every other non-match
+    - otherwise ticking every provider plus `Other` would not account for the fleet."""
     parser = MappedFieldParser(CONFIG)
 
-    snapshot = parser.parse(_inline("Network Adapter: 10.4.1.20/Ethernet0\n"))
+    snapshot = parser.parse(_inline("Network Adapter: Network/Ethernet (Public)\nHost FQDN: LOCATORSERVER\n"))
 
-    assert snapshot.hosting_provider is None
+    assert snapshot.hosting_provider == "Other"
 
 
 def test_hosting_provider_reads_other_from_a_domain_no_provider_claims():
@@ -175,22 +176,17 @@ def test_hosting_provider_does_not_match_a_domain_that_merely_ends_in_the_same_l
     assert snapshot.hosting_provider == "Other"
 
 
-def test_hosting_provider_is_unset_when_the_report_carries_no_network_identity():
-    parser = MappedFieldParser(CONFIG)
-
-    snapshot = parser.parse(_inline("Build: 5.2.0\n"))
-
-    assert snapshot.hosting_provider is None
-
-
 def test_hosting_provider_is_unset_when_no_providers_are_configured():
-    """The whole block is optional - a build that has not been told about any provider
-    should not start labelling every deployment `Other`."""
-    parser = MappedFieldParser({**CONFIG, "hosting_provider": None})
+    """Asking which provider hosts a deployment and asking whether anyone was checked
+    at all are different questions. With no provider configured the field stays unset for everybody and the
+    filter hides itself, rather than labelling the whole fleet `Other` as though
+    something had been checked and found absent."""
+    no_block = MappedFieldParser({**CONFIG, "hosting_provider": None})
+    empty_list = MappedFieldParser({**CONFIG, "hosting_provider": {"keys": ["Host FQDN"], "providers": []}})
+    raw = _inline("Host FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example\n")
 
-    snapshot = parser.parse(_inline("Host FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example\n"))
-
-    assert snapshot.hosting_provider is None
+    assert no_block.parse(raw).hosting_provider is None
+    assert empty_list.parse(raw).hosting_provider is None
 
 
 def test_exclude_if_rejects_matching_documents_via_sniff():
