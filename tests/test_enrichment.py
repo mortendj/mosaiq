@@ -34,6 +34,32 @@ def test_joins_values_onto_matching_snapshots(tmp_path):
     assert [s.license_status for s in snapshots] == ["valid", "perpetual"]
 
 
+def test_reads_the_tables_own_as_of_date_without_treating_it_as_a_record(tmp_path):
+    """An enriched column ages with the export it came from, not with the report on the
+    row it lands on - so the table can say when it was taken, and the page can print it
+    next to the column. The reserved entry must stay out of the lookup: it is not a
+    customer, and counting it would overstate how much the table covers."""
+    path = write_table(tmp_path, {"_meta": {"as_of": "2026-10-28"}, ACME_ID: {"status": "valid"}})
+
+    enrichment = JsonLookupEnrichment.from_file(
+        path, "customer_id", {"license_status": "status"}, label="Licence"
+    )
+
+    assert enrichment.as_of == "2026-10-28"
+    assert enrichment.label == "Licence"
+    assert list(enrichment.table) == [ACME_ID]
+    assert enrichment.apply([snapshot("Acme Nordics", ACME_ID)]) == 1
+
+
+def test_a_table_without_metadata_simply_has_no_date(tmp_path):
+    path = write_table(tmp_path, {ACME_ID: {"status": "valid"}})
+
+    enrichment = JsonLookupEnrichment.from_file(path, "customer_id", {"license_status": "status"})
+
+    assert enrichment.as_of is None
+    assert enrichment.label is None
+
+
 def test_leaves_unmatched_snapshots_untouched(tmp_path):
     """A partial table must degrade gracefully, not blank out existing values."""
     path = write_table(tmp_path, {ACME_ID: {"status": "valid"}})

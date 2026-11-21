@@ -236,7 +236,9 @@ __MOSAIQ_CHARTJS_INLINE__
 
 <header>
   <h1>Mos<span>aiq</span></h1>
-  <p>One page, every deployment: connectors, versions, modules, and hardware — sliced however you like.</p>
+  <!-- Written by the generator, not fixed here: what the page can honestly claim about
+       its own freshness depends on whether the data carries a date to claim it with. -->
+  <p>__MOSAIQ_SUBTITLE__</p>
 </header>
 
 <div class="filters">

@@ -55,7 +55,9 @@ def _build(args: argparse.Namespace) -> int:
                 f"deployment(s) against {len(enrichment.table)} table entries"
             )
 
-    output_path = build_dashboard(snapshots, args.output, unparsed_count=len(unparsed))
+    output_path = build_dashboard(
+        snapshots, args.output, unparsed_count=len(unparsed), enrichments=enrichments
+    )
     deployment_count = len(deduplicate_latest_per_deployment(snapshots)) if not enrichments else len(snapshots)
     print(f"Wrote dashboard for {deployment_count} deployment(s) to {output_path}")
     if unparsed:

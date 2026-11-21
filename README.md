@@ -229,6 +229,7 @@ An `"enrichments"` entry in your config file joins that in:
       "type": "json-lookup",
       "file": "license-status.json",
       "match_on": "customer_id",
+      "label": "Licence",
       "fields": {"license_status": "status"}
     }
   ]
@@ -251,6 +252,27 @@ is missing, empty, or absent from the table is left untouched, so a partial tabl
 degrades gracefully instead of blanking values that are already there. Each build prints
 how many deployments an enrichment actually matched, so a table that silently joins
 nothing is visible rather than quiet.
+
+**An enriched value has a different date from the row it lands on**, and the page says
+so. Every other column is as of that deployment's own report date; an enriched one is as
+of the export it was joined from — one date shared by every row, which makes it the
+column most likely to be mistaken for current. A table can date itself with a reserved
+`"_meta"` entry, which is lifted out rather than treated as a record:
+
+```json
+{
+  "_meta": {"as_of": "2026-10-28"},
+  "4200001": {"status": "Valid"}
+}
+```
+
+Give the enrichment a `"label"` as well and the page's header states which column is as
+of when — "Each customer's data is as of the date in the Report date column, with the
+exception of the Licence status, which is as of October 28th, 2026, for all." Have
+whatever produces the table write that date, rather than typing
+it into a template: a date that can drift from its data will, and always in the
+direction of looking fresher than it is. No `as_of`, no claim — the header stays quiet
+instead of quoting a date nothing stands behind.
 
 Producing that file is deliberately out of scope. It's usually a small local script
 against a system that has no business being a build-time dependency — and keeping it

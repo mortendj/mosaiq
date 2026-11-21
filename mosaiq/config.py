@@ -104,6 +104,7 @@ def _build_enrichment(entry: dict, base_dir: Path) -> JsonLookupEnrichment:
         path=_resolve(entry["file"], base_dir),
         match_on=entry["match_on"],
         fields=entry["fields"],
+        label=entry.get("label"),
     )
 
 
