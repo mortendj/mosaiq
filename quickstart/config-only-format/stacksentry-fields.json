@@ -26,5 +26,11 @@
     "keys": ["Restart Window", "Scheduled Restart"],
     "off_values": ["", "none", "not scheduled"]
   },
+  "hosting_provider": {
+    "keys": ["Network Adapter", "Host FQDN"],
+    "providers": [
+      {"label": "Northwind Hosting", "domains": ["cust.northwind-mh.example", "nwh-shared.example"]}
+    ]
+  },
   "exclude_if": {"key": "Purpose", "values": ["smoke-test"]}
 }

@@ -31,6 +31,12 @@ CONFIG = {
         "keys": ["Restart Window", "Scheduled Restart"],
         "off_values": ["", "none", "not scheduled"],
     },
+    "hosting_provider": {
+        "keys": ["Network Adapter", "Host FQDN"],
+        "providers": [
+            {"label": "Northwind Hosting", "domains": ["cust.northwind-mh.example", "nwh-shared.example"]}
+        ],
+    },
     "exclude_if": {"key": "Purpose", "values": ["smoke-test"]},
 }
 
@@ -63,6 +69,7 @@ def test_sniffs_and_parses_a_report_format_never_seen_by_any_built_in_parser():
     assert snapshot.document_count == 1_124_500
     assert snapshot.modules == {"Search", "Auditor", "Agent"}
     assert snapshot.auto_restart == "Yes"
+    assert snapshot.hosting_provider == "Northwind Hosting"
     assert snapshot.source_format == "test-mapped-format"
 
 
@@ -90,6 +97,100 @@ def test_auto_restart_is_unset_when_the_report_never_mentions_restarts():
     snapshot = parser.parse(_inline("Build: 5.2.0\n"))
 
     assert snapshot.auto_restart is None
+
+
+def test_hosting_provider_is_read_from_a_hostname_under_the_providers_domain():
+    """The adapter field names the domain on its own; the hostname field carries it as
+    a suffix. Either shape has to resolve to the same provider, since which of the two
+    a given report carries is not something the reader gets to choose."""
+    parser = MappedFieldParser(CONFIG)
+
+    adapter = parser.parse(_inline("Network Adapter: ltc.cust.northwind-mh.example/Ethernet0\n"))
+    hostname = parser.parse(_inline("Host FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example\n"))
+
+    assert adapter.hosting_provider == "Northwind Hosting"
+    assert hostname.hosting_provider == "Northwind Hosting"
+
+
+def test_hosting_provider_matches_the_providers_domain_case_insensitively():
+    """Windows reports its own hostname in whatever case it feels like; DNS does not
+    care about case and neither can this."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Host FQDN: LTC-X-S-4.LTC.Cust.Northwind-MH.Example\n"))
+
+    assert snapshot.hosting_provider == "Northwind Hosting"
+
+
+def test_hosting_provider_matches_a_shared_domain_customers_join_directly():
+    """The same provider can run more than one estate: one domain per customer under a
+    suffix it owns, and one shared domain every customer's machines join directly. Both
+    are just "domains this provider's machines live under", so both are one list."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Host FQDN: ltc-app-04.nwh-shared.example\n"))
+
+    assert snapshot.hosting_provider == "Northwind Hosting"
+
+
+def test_hosting_provider_falls_back_to_a_later_key_when_the_first_carries_no_domain():
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(
+        _inline("Network Adapter: 10.4.1.20/Ethernet0\nHost FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example\n")
+    )
+
+    assert snapshot.hosting_provider == "Northwind Hosting"
+
+
+def test_hosting_provider_is_unset_when_the_report_only_carries_ip_addresses():
+    """An address is dotted but says nothing about who owns the machine, so a report
+    that identifies itself by IP alone is unknown, not `Other`."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Network Adapter: 10.4.1.20/Ethernet0\n"))
+
+    assert snapshot.hosting_provider is None
+
+
+def test_hosting_provider_reads_other_from_a_domain_no_provider_claims():
+    """Not "self-hosted": an unrecognized domain could be a provider nobody has
+    configured yet. `Other` says only what the evidence supports, while still giving
+    the filter a tickable complement."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Host FQDN: RM-APP-07.corp.riverside-mutual.example\n"))
+
+    assert snapshot.hosting_provider == "Other"
+
+
+def test_hosting_provider_does_not_match_a_domain_that_merely_ends_in_the_same_letters():
+    """A lookalike like "notcust.northwind-mh.example" is a different domain from
+    "cust.northwind-mh.example" and belongs to whoever registered it - the suffix only
+    matches on a label boundary, never mid-label."""
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Host FQDN: host.notcust.northwind-mh.example\n"))
+
+    assert snapshot.hosting_provider == "Other"
+
+
+def test_hosting_provider_is_unset_when_the_report_carries_no_network_identity():
+    parser = MappedFieldParser(CONFIG)
+
+    snapshot = parser.parse(_inline("Build: 5.2.0\n"))
+
+    assert snapshot.hosting_provider is None
+
+
+def test_hosting_provider_is_unset_when_no_providers_are_configured():
+    """The whole block is optional - a build that has not been told about any provider
+    should not start labelling every deployment `Other`."""
+    parser = MappedFieldParser({**CONFIG, "hosting_provider": None})
+
+    snapshot = parser.parse(_inline("Host FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example\n"))
+
+    assert snapshot.hosting_provider is None
 
 
 def test_exclude_if_rejects_matching_documents_via_sniff():

@@ -85,10 +85,12 @@ config alone and a fifth via a custom parser as worked examples.
   questions like "how many deployments run connector X" or "how much CPU/RAM/disk does
   a deployment with N documents typically need, and does that differ by database type."
 - **Filter by report date, free text, major version, connector, module, database type,
-  or whether the deployment restarts itself on a schedule** — major version
-  (4.x/5.x/6.x/7.x...) is auto-detected from whatever versions are actually present,
-  not a hardcoded list. Filters whose values the data doesn't supply hide themselves
-  rather than showing an empty box.
+  whether the deployment restarts itself on a schedule, or who hosts it** — major
+  version (4.x/5.x/6.x/7.x...) is auto-detected from whatever versions are actually
+  present, not a hardcoded list. Hosting is inferred from the domain the machines sit
+  on, since no report names its hosting provider outright, which makes "show me every
+  deployment run by the same provider" one tick rather than a memory exercise. Filters
+  whose values the data doesn't supply hide themselves rather than showing an empty box.
 - **Enrichment from outside the reports** — join a lookup table keyed by any snapshot
   field onto the dashboard, for facts a report can't tell you about itself: contract
   state, support tier, ownership, licence validity. See

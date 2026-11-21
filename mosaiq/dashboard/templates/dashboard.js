@@ -32,6 +32,7 @@ const state = {
   osReleases: new Set(),
   licenseStatuses: new Set(),
   autoRestart: new Set(),
+  hostingProviders: new Set(),
   sortKey: "deployment_name",
   sortDir: 1,
   scatterXMetric: "cpu_cores",
@@ -91,6 +92,15 @@ function allLicenseStatuses() {
 function allAutoRestart() {
   return uniqueSorted(DEPLOYMENTS.map((d) => d.auto_restart));
 }
+// "Who runs the servers" - resolved by the parser from the domain the machines sit on,
+// since no report states it outright. Answering a provider's question once for every
+// deployment it runs is the whole point, and it pairs with Auto restart: a provider's
+// customers who restart on no schedule are the ones who will not pick up a new release
+// on their own. A deployment whose report never mentions its network identity has no
+// value here at all and simply drops out of the filter.
+function allHostingProviders() {
+  return uniqueSorted(DEPLOYMENTS.map((d) => d.hosting_provider));
+}
 
 function renderChecklist(containerId, values, selectedSet) {
   const container = document.getElementById(containerId);
@@ -128,6 +138,7 @@ function applyFilters() {
     if (state.osReleases.size && !state.osReleases.has(osReleaseOf(d.os_name))) return false;
     if (state.licenseStatuses.size && !state.licenseStatuses.has(d.license_status)) return false;
     if (state.autoRestart.size && !state.autoRestart.has(d.auto_restart)) return false;
+    if (state.hostingProviders.size && !state.hostingProviders.has(d.hosting_provider)) return false;
     return true;
   });
 }
@@ -474,6 +485,7 @@ function renderChecklists() {
   renderChecklist("filter-os", allOsReleases(), state.osReleases);
   renderChecklist("filter-license", allLicenseStatuses(), state.licenseStatuses);
   renderChecklist("filter-restart", allAutoRestart(), state.autoRestart);
+  renderChecklist("filter-hosting", allHostingProviders(), state.hostingProviders);
 }
 
 function wireFilterControls() {
@@ -523,6 +535,7 @@ function wireFilterControls() {
     state.osReleases.clear();
     state.licenseStatuses.clear();
     state.autoRestart.clear();
+    state.hostingProviders.clear();
     dateFrom.value = "";
     dateTo.value = "";
     document.getElementById("filter-search").value = "";

@@ -39,6 +39,7 @@ def _snapshot_to_json(snapshot: DeploymentSnapshot) -> dict:
         "license_expiry": snapshot.license_expiry,
         "license_status": snapshot.license_status,
         "auto_restart": snapshot.auto_restart,
+        "hosting_provider": snapshot.hosting_provider,
         "report_date": snapshot.report_date.isoformat() if snapshot.report_date else None,
         "product_version": snapshot.product_version,
         "modules": sorted(snapshot.modules),

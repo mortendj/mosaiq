@@ -8,6 +8,10 @@ CPU Count: 12
 Memory: 48 GB
 OS Build: Windows Server 2022 Datacenter
 
+####################### NETWORK #########################
+Network Adapter: corp.riverside-mutual.example/Ethernet0
+Host FQDN: RM-APP-07.corp.riverside-mutual.example
+
 ######################## STORAGE ########################
 Data Engine: POSTGRES
 Catalog Size: 212.5 GB

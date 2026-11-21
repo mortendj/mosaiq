@@ -8,6 +8,10 @@ CPU Count: 6
 Memory: 24 GB
 OS Build: Windows Server 2019 Standard
 
+####################### NETWORK #########################
+Network Adapter: ltc.cust.northwind-mh.example/Ethernet0
+Host FQDN: ltc-x-s-4.ltc.cust.northwind-mh.example
+
 ######################## STORAGE ########################
 Data Engine: MSSQL
 Catalog Size: 38,900 MB

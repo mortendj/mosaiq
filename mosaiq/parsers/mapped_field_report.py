@@ -16,6 +16,7 @@ schema, and README.md for the summary.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from mosaiq.model import DeploymentSnapshot, RawDocument
@@ -34,6 +35,19 @@ _FIELD_CONVERTERS = {
 
 _AUTO_RESTART_ON = "Yes"
 _AUTO_RESTART_OFF = "No"
+
+# A deployment whose report does carry the fields, on a domain none of the configured
+# providers claim. Named rather than left blank so the filter can offer the complement
+# ("everything not run by provider X") as something you can actually tick - and
+# deliberately not "self-hosted", which the evidence does not support: an unrecognized
+# domain can just as easily be a provider nobody has configured yet.
+_HOSTING_UNMATCHED = "Other"
+
+# Hostnames and domains as they sit inside a larger free-text value, e.g. an adapter
+# line that reads "corp.example.net/Ethernet0" - letters, digits, dots and hyphens,
+# stopping at anything else.
+_DOMAIN_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]*")
+_IPV4_RE = re.compile(r"^\d+(\.\d+)+$")
 
 
 class MappedFieldParser(ReportParser):
@@ -82,6 +96,62 @@ class MappedFieldParser(ReportParser):
                 continue
             return _AUTO_RESTART_OFF if value.strip().lower() in off_values else _AUTO_RESTART_ON
         return None
+
+    def _resolve_hosting_provider(self, flat: dict[str, str]) -> str | None:
+        """Answers "who runs the servers this deployment sits on" - a fact no report
+        states outright, but which the machine's own domain gives away, because a
+        managed-hosting provider joins its customers' machines to domains it owns.
+
+        So the rule is a list of domains per provider, and a hostname or domain found
+        in the configured fields means that provider when it *is* one of them or sits
+        beneath one. One rule covers both shapes a provider's estate comes in: a
+        per-customer domain under a suffix the provider owns (`abc.hosting.example`,
+        `def.hosting.example` - configure `hosting.example` once and every customer's
+        own subdomain follows), and a single shared domain every customer's machines
+        join directly (`shared.example`). Both the provider's name and its domains come
+        from config, never from here - which is what lets a public parser infer
+        something as specific as "this fleet's machines are run by <company>" without
+        naming the company in committed code.
+
+        This is inference from a naming convention, not a stated fact, so treat the
+        result as a strong signal rather than proof: it is right about every host whose
+        name follows the convention, and silent about one that does not - including a
+        provider's own estate that it has not been told about. A deployment whose report
+        carries no domain at all is left unset rather than answering `Other`, so a
+        format that never reports its network identity is not recorded as being on an
+        unrecognized domain; bare IP addresses are passed over for the same reason,
+        since an address says nothing about who owns the machine.
+
+        Only the first occurrence of each configured key is visible here (the section
+        flattener keeps the first and drops later repeats), which matters for a field a
+        report can emit once per network adapter - hence a key list, so a single-valued
+        hostname field can back up a repeated adapter one.
+        """
+        config = self.config.get("hosting_provider")
+        if not config:
+            return None
+
+        providers = [
+            (provider["label"], [domain.strip().lower().strip(".") for domain in provider["domains"]])
+            for provider in config.get("providers", [])
+        ]
+        found_a_domain = False
+        for key in config["keys"]:
+            value = flat.get(key)
+            if not value or value.startswith(self._error_marker):
+                continue
+            for token in _DOMAIN_TOKEN_RE.findall(value.lower()):
+                token = token.strip(".")
+                if "." not in token or _IPV4_RE.match(token):
+                    continue
+                found_a_domain = True
+                for label, domains in providers:
+                    # Matching on a label boundary, never mid-label: a host under
+                    # "corp.example.net" is the provider's, and "notcorp.example.net" is
+                    # a different domain belonging to whoever registered it.
+                    if any(token == domain or token.endswith("." + domain) for domain in domains):
+                        return label
+        return _HOSTING_UNMATCHED if found_a_domain else None
 
     def sniff(self, text: str) -> bool:
         flat = flatten_any_sections(text)
@@ -132,6 +202,7 @@ class MappedFieldParser(ReportParser):
             document_count=document_count,
             license_expiry=self._resolve(flat, "license_expiry"),
             auto_restart=self._resolve_auto_restart(flat),
+            hosting_provider=self._resolve_hosting_provider(flat),
             source_format=self.format_name,
             source_reference=raw.origin_id,
         )

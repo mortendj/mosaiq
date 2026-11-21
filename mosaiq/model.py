@@ -36,6 +36,7 @@ class DeploymentSnapshot:
     license_expiry: str | None = None
     license_status: str | None = None
     auto_restart: str | None = None
+    hosting_provider: str | None = None
     source_format: str = ""
     source_reference: str = ""
     extra: dict[str, Any] = field(default_factory=dict)

@@ -8,6 +8,10 @@ CPU Count: 12
 Memory: 48 GB
 OS Build: Windows Server 2022 Datacenter
 
+####################### NETWORK #########################
+Network Adapter: exa.cust.northwind-mh.example/Ethernet0
+Host FQDN: exa-x-s-12.exa.cust.northwind-mh.example
+
 ######################## STORAGE ########################
 Data Engine: POSTGRES
 Catalog Size: 0.512 TB

@@ -60,6 +60,12 @@ other two.
     "keys": ["Restart Window", "Scheduled Restart"],
     "off_values": ["", "none", "not scheduled"]
   },
+  "hosting_provider": {
+    "keys": ["Network Adapter", "Host FQDN"],
+    "providers": [
+      {"label": "Northwind Hosting", "domains": ["cust.northwind-mh.example", "nwh-shared.example"]}
+    ]
+  },
   "exclude_if": {"key": "Purpose", "values": ["smoke-test"]}
 }
 ```
@@ -88,6 +94,22 @@ other two.
   directly would give you one entry per distinct restart time instead of a yes/no. A
   report carrying none of the keys leaves the field unset rather than answering `No`, so
   a format that simply doesn't report restarts isn't counted as having none.
+- **`hosting_provider`** *(optional)* — answers "who runs the servers this deployment
+  sits on," surfaced as the dashboard's **Hosted by** filter. No report states this
+  outright, but a managed-hosting provider joins its customers' machines to domains it
+  owns, so the rule is a list of `"domains"` per provider: a hostname or domain found in
+  `"keys"` (tried in order, like `fields`) means that provider when it *is* one of them
+  or sits beneath one. One entry covers a whole per-customer estate —
+  `cust.northwind-mh.example` matches `abc.cust.northwind-mh.example` and every sibling —
+  and a provider running several estates (a shared domain alongside per-customer ones)
+  just lists them all. Matching is on a label boundary, so `notcust.example.net` is never
+  read as sitting under `cust.example.net`. A report carrying a domain no provider claims
+  gets `Other` — deliberately not "self-hosted", which the evidence doesn't support, but
+  enough to let the filter offer the complement; one carrying no domain at all (or only
+  bare IP addresses, which say nothing about ownership) is left unset and drops out of
+  the filter instead. Worth taking as a strong signal rather than proof: it's right about
+  every host that follows its provider's naming convention, and silent about one that
+  doesn't — including an estate of the same provider you haven't listed yet.
 - **`exclude_if`** *(optional)* — drop any document where a field's value is in the
   given list. Checked as part of recognizing the document, so an excluded document
   shows up in the build output as "could not be parsed" rather than silently
